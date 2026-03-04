@@ -1,0 +1,57 @@
+version: "3.9"
+
+# ── Task Manager — Full Stack ─────────────────────────────────────────────────
+#
+# Usage:
+#   docker compose up --build          # first run (builds images)
+#   docker compose up -d               # subsequent runs (detached)
+#   docker compose down -v             # stop & remove containers + volumes
+#
+# Services:
+#   db      — PostgreSQL 15
+#   backend — Spring Boot API  → http://localhost:8080
+#             Swagger UI       → http://localhost:8080/swagger-ui.html
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: taskmanager_db
+    environment:
+      POSTGRES_DB:       taskmanager
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Spring Boot API ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taskmanager_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL:      jdbc:postgresql://db:5432/taskmanager
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # Override with a strong secret in production!
+      JWT_SECRET: dGFza21hbmFnZXJfc2VjcmV0X2tleV9mb3JfcG9ydGZvbGlvX2RlbW9fMjAyNA==
+      JWT_EXPIRATION_MS: "86400000"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
