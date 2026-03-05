@@ -36,6 +36,13 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
+
+    <!-- SLF4J API — needed at compile time by @Slf4j (Lombok).
+         Each consuming Spring Boot app supplies the implementation via its own starter-logging. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
