@@ -164,10 +164,10 @@ export function Dashboard() {
     <Layout>
       {/* ── Page header ────────────────────────────────────────────── */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Good {getGreeting()}, {user?.firstName}
         </h1>
-        <p className="mt-1 text-gray-500">Here's what's on your plate today.</p>
+        <p className="mt-1 text-gray-500 dark:text-gray-400">Here's what's on your plate today.</p>
       </div>
 
       {/* ── Stats row ──────────────────────────────────────────────── */}
@@ -357,8 +357,8 @@ function TaskCard({
     task.dueDate && task.status !== 'DONE' && new Date(task.dueDate) < new Date();
 
   return (
-    <div className={`bg-white rounded-xl border p-5 hover:shadow-sm transition-all group ${
-      selected ? 'border-blue-400 bg-blue-50/30' : 'border-gray-200 hover:border-blue-300'
+    <div className={`bg-white dark:bg-gray-800 rounded-xl border p-5 hover:shadow-sm transition-all group ${
+      selected ? 'border-blue-400 bg-blue-50/30 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
     }`}>
       <div className="flex items-start justify-between gap-4">
         {/* Checkbox */}
@@ -371,7 +371,7 @@ function TaskCard({
         {/* Left: title + meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm font-semibold text-gray-900 truncate">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
               {task.title}
             </h3>
             <StatusBadge   status={task.status}   />
