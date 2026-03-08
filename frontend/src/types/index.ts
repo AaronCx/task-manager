@@ -3,6 +3,7 @@
 export interface AuthResponse {
   token: string;
   tokenType: string;
+  refreshToken: string;
   userId: number;
   email: string;
   firstName: string;

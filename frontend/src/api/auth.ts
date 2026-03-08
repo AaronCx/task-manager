@@ -7,4 +7,10 @@ export const authApi = {
 
   login: (data: LoginRequest) =>
     axiosClient.post<AuthResponse>('/auth/login', data),
+
+  refresh: (refreshToken: string) =>
+    axiosClient.post<AuthResponse>('/auth/refresh', { refreshToken }),
+
+  logout: () =>
+    axiosClient.post('/auth/logout'),
 };
