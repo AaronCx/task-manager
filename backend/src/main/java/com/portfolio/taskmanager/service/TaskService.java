@@ -7,8 +7,8 @@ import com.portfolio.taskmanager.entity.User;
 import com.portfolio.taskmanager.enums.TaskPriority;
 import com.portfolio.taskmanager.enums.TaskStatus;
 import com.portfolio.taskmanager.exception.ResourceNotFoundException;
+import com.portfolio.taskmanager.kafka.EventProducer;
 import com.portfolio.taskmanager.kafka.TaskEvent;
-import com.portfolio.taskmanager.kafka.TaskEventProducer;
 import com.portfolio.taskmanager.repository.TaskRepository;
 import com.portfolio.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class TaskService {
 
     private final TaskRepository    taskRepository;
     private final UserRepository    userRepository;
-    private final TaskEventProducer eventProducer;
+    private final EventProducer eventProducer;
 
     // ── Read ──────────────────────────────────────────────────────────
 

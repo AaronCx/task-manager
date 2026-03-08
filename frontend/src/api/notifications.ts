@@ -1,4 +1,4 @@
-import axiosClient from './axiosClient';
+import { notificationsClient } from './axiosClient';
 
 export interface Notification {
   id: number;
@@ -17,13 +17,13 @@ export interface UnreadCountResponse {
 export const notificationsApi = {
   /** Fetch the most-recent 20 notifications for the current user. */
   getAll: () =>
-    axiosClient.get<Notification[]>('/notifications'),
+    notificationsClient.get<Notification[]>('/notifications'),
 
   /** Unread count for the bell badge. */
   getUnreadCount: () =>
-    axiosClient.get<UnreadCountResponse>('/notifications/unread-count'),
+    notificationsClient.get<UnreadCountResponse>('/notifications/unread-count'),
 
   /** Mark every notification as read. */
   markAllRead: () =>
-    axiosClient.put<{ marked: number }>('/notifications/read-all'),
+    notificationsClient.put<{ marked: number }>('/notifications/read-all'),
 };

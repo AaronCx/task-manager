@@ -2,11 +2,12 @@ package com.portfolio.taskmanager.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Thin wrapper around {@link KafkaTemplate} for publishing task events.
+ * Kafka-backed event producer — active when {@code app.kafka.enabled=true}.
  *
  * Error handling strategy:
  *   - Kafka failures are caught and logged as WARN — they never bubble up to
@@ -14,9 +15,10 @@ import org.springframework.stereotype.Component;
  *   - The send is non-blocking (fire-and-forget with callback logging).
  */
 @Component
+@ConditionalOnProperty(name = "app.kafka.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
-public class TaskEventProducer {
+public class TaskEventProducer implements EventProducer {
 
     private final KafkaTemplate<String, TaskEvent> kafkaTemplate;
 

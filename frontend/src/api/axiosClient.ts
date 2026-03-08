@@ -19,31 +19,38 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => _accessToken;
 
-// ── Axios instance ────────────────────────────────────────────────────────────
+// ── Shared interceptor setup ──────────────────────────────────────────────────
+function addAuthInterceptor(instance: ReturnType<typeof axios.create>) {
+  instance.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+      if (_accessToken) {
+        config.headers.Authorization = `Bearer ${_accessToken}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  instance.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError) => Promise.reject(error)
+  );
+}
+
+// ── Task API client ───────────────────────────────────────────────────────────
 const axiosClient = axios.create({
-  baseURL: '/api',          // proxied to http://localhost:8080/api in dev
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
   timeout: 10_000,
 });
+addAuthInterceptor(axiosClient);
 
-// Request interceptor — attach Bearer token if available
-axiosClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    if (_accessToken) {
-      config.headers.Authorization = `Bearer ${_accessToken}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor — surface friendly error messages
-axiosClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    // Pass the error through; callers decide how to handle it
-    return Promise.reject(error);
-  }
-);
+// ── Notifications API client ──────────────────────────────────────────────────
+export const notificationsClient = axios.create({
+  baseURL: import.meta.env.VITE_NOTIFICATIONS_URL || '/api',
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 10_000,
+});
+addAuthInterceptor(notificationsClient);
 
 export default axiosClient;
