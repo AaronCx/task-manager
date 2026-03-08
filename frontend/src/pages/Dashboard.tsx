@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { tasksApi } from '../api/tasks';
@@ -16,34 +16,78 @@ const STATUS_FILTERS: { label: string; value: TaskStatus | 'ALL' }[] = [
   { label: 'Done',        value: 'DONE' },
 ];
 
+type SortKey = 'newest' | 'oldest' | 'priority' | 'dueDate';
+
+const SORT_OPTIONS: { label: string; value: SortKey }[] = [
+  { label: 'Newest first',  value: 'newest' },
+  { label: 'Oldest first',  value: 'oldest' },
+  { label: 'Priority',      value: 'priority' },
+  { label: 'Due date',      value: 'dueDate' },
+];
+
+const PRIORITY_ORDER: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+
+function sortTasks(tasks: Task[], key: SortKey): Task[] {
+  const sorted = [...tasks];
+  switch (key) {
+    case 'newest':
+      return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    case 'oldest':
+      return sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    case 'priority':
+      return sorted.sort((a, b) => (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9));
+    case 'dueDate':
+      return sorted.sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
+    default:
+      return sorted;
+  }
+}
+
 /**
  * Dashboard — main view showing the authenticated user's task list.
- * Supports status filtering and delete operations.
+ * Supports status filtering, search, sorting, and delete operations.
  */
 export function Dashboard() {
   const { user } = useAuth();
 
   const [tasks,       setTasks]       = useState<Task[]>([]);
   const [filter,      setFilter]      = useState<TaskStatus | 'ALL'>('ALL');
+  const [search,      setSearch]      = useState('');
+  const [sortBy,      setSortBy]      = useState<SortKey>('newest');
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState<string | null>(null);
   const [deletingId,  setDeletingId]  = useState<number | null>(null);
 
-  // Fetch tasks whenever the filter changes
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch tasks whenever the filter or search changes
+  const fetchTasks = useCallback(() => {
     setLoading(true);
     setError(null);
 
     const status = filter === 'ALL' ? undefined : filter;
+    const q = debouncedSearch.trim() || undefined;
 
-    tasksApi.getAll(status)
+    tasksApi.getAll(status, q)
       .then((res) => setTasks(res.data))
       .catch((err: AxiosError) => {
         setError('Failed to load tasks. Please refresh.');
         console.error(err);
       })
       .finally(() => setLoading(false));
-  }, [filter]);
+  }, [filter, debouncedSearch]);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this task?')) return;
@@ -58,7 +102,7 @@ export function Dashboard() {
     }
   };
 
-  // ── Stats cards ───────────────────────────────────────────────────
+  // ── Stats cards (computed from ALL fetched tasks, before sort) ──
   const stats = {
     total:      tasks.length,
     todo:       tasks.filter((t) => t.status === 'TODO').length,
@@ -66,12 +110,14 @@ export function Dashboard() {
     done:       tasks.filter((t) => t.status === 'DONE').length,
   };
 
+  const sortedTasks = sortTasks(tasks, sortBy);
+
   return (
     <Layout>
       {/* ── Page header ────────────────────────────────────────────── */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
-          Good {getGreeting()}, {user?.firstName} 👋
+          Good {getGreeting()}, {user?.firstName}
         </h1>
         <p className="mt-1 text-gray-500">Here's what's on your plate today.</p>
       </div>
@@ -91,21 +137,53 @@ export function Dashboard() {
         ))}
       </div>
 
-      {/* ── Filter tabs ────────────────────────────────────────────── */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-        {STATUS_FILTERS.map(({ label, value }) => (
-          <button
-            key={value}
-            onClick={() => setFilter(value)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              filter === value
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {/* ── Search + Filter + Sort row ────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        {/* Search */}
+        <div className="relative flex-1">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search tasks..."
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        {/* Status filter tabs */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+          {STATUS_FILTERS.map(({ label, value }) => (
+            <button
+              key={value}
+              onClick={() => setFilter(value)}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                filter === value
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort dropdown */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortKey)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          {SORT_OPTIONS.map(({ label, value }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
       </div>
 
       {/* ── Task list ──────────────────────────────────────────────── */}
@@ -122,22 +200,27 @@ export function Dashboard() {
 
       {!loading && !error && tasks.length === 0 && (
         <div className="text-center py-20">
-          <span className="text-5xl">📋</span>
-          <p className="mt-4 text-lg font-medium text-gray-600">No tasks yet</p>
-          <p className="text-sm text-gray-400 mt-1">Create your first task to get started</p>
-          <Link
-            to="/tasks/new"
-            className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg
-                       text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            Create task
-          </Link>
+          <p className="mt-4 text-lg font-medium text-gray-600">
+            {debouncedSearch ? 'No tasks match your search' : 'No tasks yet'}
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            {debouncedSearch ? 'Try a different search term' : 'Create your first task to get started'}
+          </p>
+          {!debouncedSearch && (
+            <Link
+              to="/tasks/new"
+              className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg
+                         text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              Create task
+            </Link>
+          )}
         </div>
       )}
 
-      {!loading && !error && tasks.length > 0 && (
+      {!loading && !error && sortedTasks.length > 0 && (
         <div className="space-y-3">
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -186,12 +269,12 @@ function TaskCard({
           <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
             {task.dueDate && (
               <span className={isOverdue ? 'text-red-500 font-medium' : ''}>
-                📅 {isOverdue ? 'Overdue: ' : 'Due: '}
+                {isOverdue ? 'Overdue: ' : 'Due: '}
                 {format(new Date(task.dueDate), 'MMM d, yyyy')}
               </span>
             )}
             {task.assignedToName && (
-              <span>👤 {task.assignedToName}</span>
+              <span>Assigned: {task.assignedToName}</span>
             )}
           </div>
         </div>
@@ -212,7 +295,7 @@ function TaskCard({
                        border border-red-200 rounded-lg hover:bg-red-50 transition-colors
                        disabled:opacity-50"
           >
-            {isDeleting ? '…' : 'Delete'}
+            {isDeleting ? '...' : 'Delete'}
           </button>
         </div>
       </div>

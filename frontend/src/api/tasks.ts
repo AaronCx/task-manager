@@ -2,9 +2,14 @@ import axiosClient from './axiosClient';
 import { Task, TaskRequest, TaskStatus } from '../types';
 
 export const tasksApi = {
-  /** Fetch all tasks, optionally filtered by status. */
-  getAll: (status?: TaskStatus) =>
-    axiosClient.get<Task[]>('/tasks', { params: status ? { status } : undefined }),
+  /** Fetch all tasks, optionally filtered by status and/or search query. */
+  getAll: (status?: TaskStatus, search?: string) =>
+    axiosClient.get<Task[]>('/tasks', {
+      params: {
+        ...(status ? { status } : {}),
+        ...(search ? { search } : {}),
+      },
+    }),
 
   getById: (id: number) =>
     axiosClient.get<Task>(`/tasks/${id}`),

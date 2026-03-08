@@ -35,17 +35,15 @@ public class TaskController {
 
     @GetMapping
     @Operation(summary = "List all tasks for the authenticated user",
-               description = "Optionally filter by status query param")
+               description = "Optionally filter by status and/or search by title/description")
     public ResponseEntity<List<TaskResponse>> getTasks(
             @Parameter(description = "Optional status filter: TODO | IN_PROGRESS | DONE")
             @RequestParam(required = false) TaskStatus status,
+            @Parameter(description = "Search tasks by title or description")
+            @RequestParam(required = false) String search,
             @AuthenticationPrincipal User currentUser) {
 
-        List<TaskResponse> tasks = (status != null)
-                ? taskService.getTasksByStatus(currentUser, status)
-                : taskService.getTasksForUser(currentUser);
-
-        return ResponseEntity.ok(tasks);
+        return ResponseEntity.ok(taskService.getTasksForUser(currentUser, status, search));
     }
 
     // ── GET /api/tasks/{id} ───────────────────────────────────────────

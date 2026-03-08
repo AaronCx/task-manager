@@ -38,22 +38,24 @@ public class TaskService {
 
     // ── Read ──────────────────────────────────────────────────────────
 
-    /** Return all tasks owned by the caller, newest first. */
+    /** Return all tasks owned by the caller, newest first. Optionally filter by status and search query. */
     @Transactional(readOnly = true)
-    public List<TaskResponse> getTasksForUser(User currentUser) {
-        return taskRepository.findByOwnerOrderByCreatedAtDesc(currentUser)
-                .stream()
-                .map(TaskResponse::from)
-                .toList();
-    }
+    public List<TaskResponse> getTasksForUser(User currentUser, TaskStatus status, String search) {
+        List<Task> tasks;
 
-    /** Return all tasks owned by the caller filtered by status. */
-    @Transactional(readOnly = true)
-    public List<TaskResponse> getTasksByStatus(User currentUser, TaskStatus status) {
-        return taskRepository.findByOwnerAndStatusOrderByCreatedAtDesc(currentUser, status)
-                .stream()
-                .map(TaskResponse::from)
-                .toList();
+        boolean hasSearch = search != null && !search.isBlank();
+
+        if (status != null && hasSearch) {
+            tasks = taskRepository.searchByOwnerAndStatus(currentUser, status, search.trim());
+        } else if (status != null) {
+            tasks = taskRepository.findByOwnerAndStatusOrderByCreatedAtDesc(currentUser, status);
+        } else if (hasSearch) {
+            tasks = taskRepository.searchByOwner(currentUser, search.trim());
+        } else {
+            tasks = taskRepository.findByOwnerOrderByCreatedAtDesc(currentUser);
+        }
+
+        return tasks.stream().map(TaskResponse::from).toList();
     }
 
     /** Return a single task, validating ownership. */
