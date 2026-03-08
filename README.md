@@ -2,7 +2,9 @@
 
 > **Portfolio project** demonstrating production-ready Java/Spring Boot + React/TypeScript skills.
 
-[![CI](https://github.com/AaronCx/task-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/AaronCx/task-manager/actions/workflows/ci.yml)
+**[Live Demo](https://taskflow-acx.vercel.app)** — Backend on Render, Frontend on Vercel
+
+[![CI](https://github.com/AaronCx/taskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/AaronCx/taskflow/actions/workflows/ci.yml)
 
 ---
 
