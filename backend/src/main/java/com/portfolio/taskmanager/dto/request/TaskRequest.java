@@ -23,5 +23,8 @@ public record TaskRequest(
     LocalDate dueDate,
 
     /** Optional: ID of the user to assign the task to. */
-    Long assignedToId
+    Long assignedToId,
+
+    /** Optional: ID of the category to tag the task with. */
+    Long categoryId
 ) {}

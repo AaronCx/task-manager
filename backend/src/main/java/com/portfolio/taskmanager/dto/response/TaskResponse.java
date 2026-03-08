@@ -19,6 +19,9 @@ public record TaskResponse(
     String        ownerName,
     Long          assignedToId,
     String        assignedToName,
+    Long          categoryId,
+    String        categoryName,
+    String        categoryColor,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
@@ -28,6 +31,10 @@ public record TaskResponse(
                 ? task.getAssignedTo().getFirstName() + " " + task.getAssignedTo().getLastName()
                 : null;
         Long assignedId = task.getAssignedTo() != null ? task.getAssignedTo().getId() : null;
+
+        Long catId = task.getCategory() != null ? task.getCategory().getId() : null;
+        String catName = task.getCategory() != null ? task.getCategory().getName() : null;
+        String catColor = task.getCategory() != null ? task.getCategory().getColor() : null;
 
         return new TaskResponse(
             task.getId(),
@@ -40,6 +47,9 @@ public record TaskResponse(
             task.getOwner().getFirstName() + " " + task.getOwner().getLastName(),
             assignedId,
             assignedName,
+            catId,
+            catName,
+            catColor,
             task.getCreatedAt(),
             task.getUpdatedAt()
         );

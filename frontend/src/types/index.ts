@@ -38,6 +38,9 @@ export interface Task {
   ownerName: string;
   assignedToId: number | null;
   assignedToName: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  categoryColor: string | null;
   createdAt: string;             // ISO datetime
   updatedAt: string;
 }
@@ -49,6 +52,13 @@ export interface TaskRequest {
   priority?: TaskPriority;
   dueDate?: string | null;
   assignedToId?: number | null;
+  categoryId?: number | null;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  color: string;
 }
 
 // ── Misc ──────────────────────────────────────────────────────────────────────

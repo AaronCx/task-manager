@@ -57,6 +57,11 @@ public class Task {
     @JoinColumn(name = "assigned_to_id")
     private User assignedTo;
 
+    /** Optional: task category for organization. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

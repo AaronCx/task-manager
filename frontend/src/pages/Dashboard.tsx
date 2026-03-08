@@ -260,6 +260,14 @@ function TaskCard({
             </h3>
             <StatusBadge   status={task.status}   />
             <PriorityBadge priority={task.priority} />
+            {task.categoryName && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                style={{ backgroundColor: task.categoryColor ?? '#6b7280' }}
+              >
+                {task.categoryName}
+              </span>
+            )}
           </div>
 
           {task.description && (

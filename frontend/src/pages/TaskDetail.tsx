@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { tasksApi } from '../api/tasks';
 import { usersApi, UserSummary } from '../api/users';
-import { Task, TaskPriority, TaskRequest, TaskStatus } from '../types';
+import { categoriesApi } from '../api/categories';
+import { Task, TaskPriority, TaskRequest, TaskStatus, Category } from '../types';
 import { Layout } from '../components/Layout';
 import { ApiError } from '../types';
 
@@ -18,9 +19,10 @@ export function TaskDetail() {
   const navigate = useNavigate();
   const isNew = id === 'new';
 
-  const [task,    setTask]    = useState<Task | null>(null);
-  const [users,   setUsers]   = useState<UserSummary[]>([]);
-  const [loading, setLoading] = useState(!isNew);
+  const [task,       setTask]       = useState<Task | null>(null);
+  const [users,      setUsers]      = useState<UserSummary[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading,    setLoading]    = useState(!isNew);
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
@@ -31,12 +33,16 @@ export function TaskDetail() {
     priority:     'MEDIUM',
     dueDate:      '',
     assignedToId: null,
+    categoryId: null,
   });
 
-  // Load users for assignment dropdown
+  // Load users and categories for dropdowns
   useEffect(() => {
     usersApi.getAll()
       .then((res) => setUsers(res.data))
+      .catch(() => { /* non-critical */ });
+    categoriesApi.getAll()
+      .then((res) => setCategories(res.data))
       .catch(() => { /* non-critical */ });
   }, []);
 
@@ -55,6 +61,7 @@ export function TaskDetail() {
           priority:     t.priority,
           dueDate:      t.dueDate ?? '',
           assignedToId: t.assignedToId,
+          categoryId:   t.categoryId,
         });
       })
       .catch(() => setError('Task not found or you don\'t have permission to view it.'))
@@ -65,8 +72,8 @@ export function TaskDetail() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    if (name === 'assignedToId') {
-      setForm((prev) => ({ ...prev, assignedToId: value ? Number(value) : null }));
+    if (name === 'assignedToId' || name === 'categoryId') {
+      setForm((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value || undefined }));
     }
@@ -248,6 +255,26 @@ export function TaskDetail() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select
+                name="categoryId"
+                value={form.categoryId ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           bg-white"
+              >
+                <option value="">No category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Actions */}

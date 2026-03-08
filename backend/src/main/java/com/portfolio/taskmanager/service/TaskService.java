@@ -2,6 +2,7 @@ package com.portfolio.taskmanager.service;
 
 import com.portfolio.taskmanager.dto.request.TaskRequest;
 import com.portfolio.taskmanager.dto.response.TaskResponse;
+import com.portfolio.taskmanager.entity.Category;
 import com.portfolio.taskmanager.entity.Task;
 import com.portfolio.taskmanager.entity.User;
 import com.portfolio.taskmanager.enums.TaskPriority;
@@ -9,6 +10,7 @@ import com.portfolio.taskmanager.enums.TaskStatus;
 import com.portfolio.taskmanager.exception.ResourceNotFoundException;
 import com.portfolio.taskmanager.kafka.EventProducer;
 import com.portfolio.taskmanager.kafka.TaskEvent;
+import com.portfolio.taskmanager.repository.CategoryRepository;
 import com.portfolio.taskmanager.repository.TaskRepository;
 import com.portfolio.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +34,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TaskService {
 
-    private final TaskRepository    taskRepository;
-    private final UserRepository    userRepository;
-    private final EventProducer eventProducer;
+    private final TaskRepository     taskRepository;
+    private final UserRepository     userRepository;
+    private final CategoryRepository categoryRepository;
+    private final EventProducer      eventProducer;
 
     // ── Read ──────────────────────────────────────────────────────────
 
@@ -77,6 +80,7 @@ public class TaskService {
                 .dueDate(request.dueDate())
                 .owner(currentUser)
                 .assignedTo(resolveAssignee(request.assignedToId()))
+                .category(resolveCategory(request.categoryId(), currentUser))
                 .build();
 
         Task saved = taskRepository.save(task);
@@ -101,6 +105,7 @@ public class TaskService {
         if (request.priority() != null) task.setPriority(request.priority());
         task.setDueDate(request.dueDate());
         task.setAssignedTo(resolveAssignee(request.assignedToId()));
+        task.setCategory(resolveCategory(request.categoryId(), currentUser));
 
         Task saved = taskRepository.save(task);
         String newStatus = saved.getStatus().name();
@@ -140,6 +145,13 @@ public class TaskService {
         if (assignedToId == null) return null;
         return userRepository.findById(assignedToId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", assignedToId));
+    }
+
+    /** Optionally resolve a category ID, validating ownership. */
+    private Category resolveCategory(Long categoryId, User owner) {
+        if (categoryId == null) return null;
+        return categoryRepository.findByIdAndOwner(categoryId, owner)
+                .orElseThrow(() -> new ResourceNotFoundException("Category", categoryId));
     }
 
     /** Construct a {@link TaskEvent} from the current state of the task. */
