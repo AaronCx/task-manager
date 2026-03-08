@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { tasksApi } from '../api/tasks';
+import { usersApi, UserSummary } from '../api/users';
 import { Task, TaskPriority, TaskRequest, TaskStatus } from '../types';
 import { Layout } from '../components/Layout';
 import { ApiError } from '../types';
@@ -18,6 +19,7 @@ export function TaskDetail() {
   const isNew = id === 'new';
 
   const [task,    setTask]    = useState<Task | null>(null);
+  const [users,   setUsers]   = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -30,6 +32,13 @@ export function TaskDetail() {
     dueDate:      '',
     assignedToId: null,
   });
+
+  // Load users for assignment dropdown
+  useEffect(() => {
+    usersApi.getAll()
+      .then((res) => setUsers(res.data))
+      .catch(() => { /* non-critical */ });
+  }, []);
 
   // Load existing task in edit mode
   useEffect(() => {
@@ -55,7 +64,12 @@ export function TaskDetail() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value || undefined }));
+    const { name, value } = e.target;
+    if (name === 'assignedToId') {
+      setForm((prev) => ({ ...prev, assignedToId: value ? Number(value) : null }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value || undefined }));
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -121,7 +135,7 @@ export function TaskDetail() {
 
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            {isNew ? '➕ New Task' : '✏️ Edit Task'}
+            {isNew ? 'New Task' : 'Edit Task'}
           </h1>
 
           {error && (
@@ -159,7 +173,7 @@ export function TaskDetail() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                            resize-none"
-                placeholder="Add more details (optional)…"
+                placeholder="Add more details (optional)..."
               />
             </div>
 
@@ -202,17 +216,38 @@ export function TaskDetail() {
               </div>
             </div>
 
-            {/* Due date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due date</label>
-              <input
-                name="dueDate"
-                type="date"
-                value={form.dueDate ?? ''}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
-                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            {/* Due date + Assignee */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Due date</label>
+                <input
+                  name="dueDate"
+                  type="date"
+                  value={form.dueDate ?? ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign to</label>
+                <select
+                  name="assignedToId"
+                  value={form.assignedToId ?? ''}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                             bg-white"
+                >
+                  <option value="">Unassigned</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.firstName} {u.lastName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Actions */}
@@ -223,7 +258,7 @@ export function TaskDetail() {
                 className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold
                            hover:bg-blue-700 transition-colors disabled:opacity-60"
               >
-                {saving ? 'Saving…' : isNew ? 'Create task' : 'Save changes'}
+                {saving ? 'Saving...' : isNew ? 'Create task' : 'Save changes'}
               </button>
               <button
                 type="button"
