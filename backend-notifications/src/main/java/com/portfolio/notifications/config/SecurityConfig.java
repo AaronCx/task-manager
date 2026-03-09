@@ -74,7 +74,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:5173", "http://localhost:3000", "https://taskflow-acx.vercel.app"));
+                "http://localhost:5173", "http://localhost:3000", "https://*.vercel.app"));
         config.setAllowedMethods(List.of("GET", "PUT", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(false);

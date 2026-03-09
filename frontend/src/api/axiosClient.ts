@@ -47,7 +47,7 @@ function addAuthInterceptor(instance: ReturnType<typeof axios.create>) {
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10_000,
+  timeout: 60_000,
 });
 addAuthInterceptor(axiosClient);
 
@@ -55,7 +55,7 @@ addAuthInterceptor(axiosClient);
 export const notificationsClient = axios.create({
   baseURL: import.meta.env.VITE_NOTIFICATIONS_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10_000,
+  timeout: 60_000,
 });
 addAuthInterceptor(notificationsClient);
 
