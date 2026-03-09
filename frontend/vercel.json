@@ -2,5 +2,9 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/notifications/:path*", "destination": "https://taskflow-notifications.onrender.com/api/notifications/:path*" },
+    { "source": "/api/:path*", "destination": "https://taskflow-api-9jhe.onrender.com/api/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
