@@ -7,7 +7,8 @@ import com.portfolio.taskmanager.entity.User;
 import com.portfolio.taskmanager.enums.TaskPriority;
 import com.portfolio.taskmanager.enums.TaskStatus;
 import com.portfolio.taskmanager.exception.ResourceNotFoundException;
-import com.portfolio.taskmanager.kafka.TaskEventProducer;
+import com.portfolio.taskmanager.kafka.EventProducer;
+import com.portfolio.taskmanager.repository.CategoryRepository;
 import com.portfolio.taskmanager.repository.TaskRepository;
 import com.portfolio.taskmanager.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,9 +33,8 @@ class TaskServiceTest {
 
     @Mock TaskRepository       taskRepository;
     @Mock UserRepository       userRepository;
-    // TaskEventProducer was added in the Kafka branch — must be mocked so
-    // @InjectMocks doesn't leave it null and cause a NullPointerException.
-    @Mock TaskEventProducer    eventProducer;
+    @Mock CategoryRepository   categoryRepository;
+    @Mock EventProducer        eventProducer;
 
     @InjectMocks TaskService taskService;
 
@@ -63,7 +63,7 @@ class TaskServiceTest {
         when(taskRepository.findByOwnerOrderByCreatedAtDesc(owner))
                 .thenReturn(List.of(sampleTask));
 
-        List<TaskResponse> result = taskService.getTasksForUser(owner);
+        List<TaskResponse> result = taskService.getTasksForUser(owner, null, null);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).title()).isEqualTo("Test Task");
@@ -73,7 +73,7 @@ class TaskServiceTest {
     @DisplayName("createTask: saves and returns new task DTO")
     void createTask_success() {
         TaskRequest request = new TaskRequest("New Task", "Desc",
-                TaskStatus.TODO, TaskPriority.HIGH, LocalDate.now().plusDays(5), null);
+                TaskStatus.TODO, TaskPriority.HIGH, LocalDate.now().plusDays(5), null, null);
 
         when(taskRepository.save(any(Task.class))).thenReturn(sampleTask);
 
