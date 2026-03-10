@@ -34,7 +34,7 @@ public class NotificationService {
     @Transactional
     public void handleTaskCreated(TaskEvent event) {
         String message = String.format(
-                "✅ Task '%s' was created with %s priority.",
+                "Task '%s' was created with %s priority.",
                 event.taskTitle(), formatPriority(event.priority()));
 
         persist(event, "TASK_CREATED", message);
@@ -51,13 +51,13 @@ public class NotificationService {
 
         if (statusChanged) {
             message = String.format(
-                    "🔄 Task '%s' moved from %s → %s.",
+                    "Task '%s' moved from %s to %s.",
                     event.taskTitle(),
                     formatStatus(event.oldStatus()),
                     formatStatus(event.newStatus()));
         } else {
             message = String.format(
-                    "✏️ Task '%s' was updated.",
+                    "Task '%s' was updated.",
                     event.taskTitle());
         }
 
@@ -69,7 +69,7 @@ public class NotificationService {
     @Transactional
     public void handleTaskDeleted(TaskEvent event) {
         String message = String.format(
-                "🗑️ Task '%s' was deleted.",
+                "Task '%s' was deleted.",
                 event.taskTitle());
 
         persist(event, "TASK_DELETED", message);

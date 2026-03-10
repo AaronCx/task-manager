@@ -26,7 +26,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo / brand */}
             <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
-              <span className="text-2xl">✅</span>
+              <span className="text-2xl font-bold text-blue-500">TF</span>
               <span className="text-xl font-bold text-blue-400">TaskFlow</span>
             </Link>
 

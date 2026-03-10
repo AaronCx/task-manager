@@ -58,7 +58,7 @@ export function Login() {
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <span className="text-4xl">✅</span>
+            <span className="text-4xl font-bold text-blue-500">TF</span>
             <h1 className="mt-3 text-2xl font-bold text-white">Welcome back</h1>
             <p className="mt-1 text-sm text-slate-400">Sign in to your TaskFlow account</p>
           </div>
