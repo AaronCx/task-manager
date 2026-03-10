@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,9 @@ import { ApiError } from '../types';
 /**
  * Login page — collects email + password and calls the /api/auth/login endpoint.
  * On success, the JWT is stored in the AuthContext (in-memory).
+ *
+ * Pings the backend health endpoint on mount to wake up the Render free-tier
+ * instance so it's warm by the time the user clicks "Sign in".
  */
 export function Login() {
   const { login } = useAuth();
@@ -16,6 +19,20 @@ export function Login() {
   const [password,  setPassword]  = useState('');
   const [error,     setError]     = useState<string | null>(null);
   const [loading,   setLoading]   = useState(false);
+  const [serverReady, setServerReady] = useState(false);
+  const warmingRef = useRef(false);
+
+  // Wake up the backend as soon as the login page loads
+  useEffect(() => {
+    if (warmingRef.current) return;
+    warmingRef.current = true;
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    // Strip /api suffix to hit the root actuator endpoint
+    const baseUrl = apiBase.replace(/\/api\/?$/, '');
+    fetch(`${baseUrl}/actuator/health`)
+      .catch(() => {})
+      .finally(() => setServerReady(true));
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -121,6 +138,13 @@ export function Login() {
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
+
+            {!serverReady && (
+              <p className="text-center text-xs text-slate-500 mt-2 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+                Waking up server…
+              </p>
+            )}
           </form>
 
           {/* Footer */}

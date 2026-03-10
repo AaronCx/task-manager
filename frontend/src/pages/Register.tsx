@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,18 @@ export function Register() {
     password:  '',
   });
   const [error,   setError]   = useState<string | null>(null);
+  const [serverReady, setServerReady] = useState(false);
+  const warmingRef = useRef(false);
+
+  useEffect(() => {
+    if (warmingRef.current) return;
+    warmingRef.current = true;
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const baseUrl = apiBase.replace(/\/api\/?$/, '');
+    fetch(`${baseUrl}/actuator/health`)
+      .catch(() => {})
+      .finally(() => setServerReady(true));
+  }, []);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -132,6 +144,13 @@ export function Register() {
             >
               {loading ? 'Creating account…' : 'Create account'}
             </button>
+
+            {!serverReady && (
+              <p className="text-center text-xs text-slate-500 mt-2 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+                Waking up server…
+              </p>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-400">
